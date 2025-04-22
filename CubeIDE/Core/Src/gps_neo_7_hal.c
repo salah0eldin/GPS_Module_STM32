@@ -5,6 +5,9 @@
  *      Author: salah0eldin
  */
 
+// ====================================================
+// Includes and Definitions
+// ====================================================
 #include "gps_neo_7_hal.h"
 
 #include "stdint.h"
@@ -19,14 +22,25 @@ UART_HandleTypeDef *huart;
 
 static char raw_buffer[GPS_BUFFER_SIZE];
 
+// ====================================================
+// Function Prototypes
+// ====================================================
 static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga);
 static int decodeRMC(char *RMCbuffer, RMCSTRUCT *rmc);
+
+// ====================================================
+// GPS HAL Initialization
+// ====================================================
 void GPS_HAL_Init(UART_HandleTypeDef *h)
 {
-    // Disable USART1 interrupt
+    // Initialize the UART handle for GPS communication
+    // Disable USART1 interrupt (if previously enabled)
     huart = h;
 }
 
+// ====================================================
+// GPS HAL Receive Raw GGA Data
+// ====================================================
 HAL_StatusTypeDef GPS_HAL_Receive_Raw_GGA_Data(char *buffer)
 {
     char data = 0;
@@ -34,16 +48,20 @@ HAL_StatusTypeDef GPS_HAL_Receive_Raw_GGA_Data(char *buffer)
 
     while (i > 0)
     {
+        // Receive one byte of data
         if (HAL_UART_Receive(huart, (uint8_t *)&data, 1, HAL_MAX_DELAY) != HAL_OK)
             return HAL_TIMEOUT; // Error in receiving data
 
+        // Check for the start of GGA sentence ('G')
         if (data == 'G')
         {
             if (HAL_UART_Receive(huart, (uint8_t *)&data, 1, HAL_MAX_DELAY) != HAL_OK)
                 return HAL_TIMEOUT;
 
-            if (data == 'A')
+            // Check for 'A' or another 'G' to confirm GGA sentence
+            if (data == 'A' || data == 'G')
             {
+                // Receive the rest of the GGA sentence
                 if (HAL_UART_Receive(huart, (uint8_t *)buffer, GPS_BUFFER_SIZE, HAL_MAX_DELAY) != HAL_OK)
                     return HAL_TIMEOUT;
 
@@ -51,12 +69,15 @@ HAL_StatusTypeDef GPS_HAL_Receive_Raw_GGA_Data(char *buffer)
             }
         }
 
-        i--;
+        i--; // Decrement retry counter
     }
 
     return HAL_TIMEOUT; // Timeout or no valid data received
 }
 
+// ====================================================
+// GPS HAL Receive Raw RMC Data
+// ====================================================
 HAL_StatusTypeDef GPS_HAL_Receive_Raw_RMC_Data(char *buffer)
 {
     char data = 0;
@@ -64,16 +85,20 @@ HAL_StatusTypeDef GPS_HAL_Receive_Raw_RMC_Data(char *buffer)
 
     while (i > 0)
     {
+        // Receive one byte of data
         if (HAL_UART_Receive(huart, (uint8_t *)&data, 1, HAL_MAX_DELAY) != HAL_OK)
             return HAL_TIMEOUT; // Error in receiving data
 
+        // Check for the start of RMC sentence ('M')
         if (data == 'M')
         {
             if (HAL_UART_Receive(huart, (uint8_t *)&data, 1, HAL_MAX_DELAY) != HAL_OK)
                 return HAL_TIMEOUT;
 
+            // Check for 'C' to confirm RMC sentence
             if (data == 'C')
             {
+                // Receive the rest of the RMC sentence
                 if (HAL_UART_Receive(huart, (uint8_t *)buffer, GPS_BUFFER_SIZE, HAL_MAX_DELAY) != HAL_OK)
                     return HAL_TIMEOUT;
 
@@ -81,31 +106,42 @@ HAL_StatusTypeDef GPS_HAL_Receive_Raw_RMC_Data(char *buffer)
             }
         }
 
-        i--;
+        i--; // Decrement retry counter
     }
 
     return HAL_TIMEOUT; // Timeout or no valid data received
 }
 
+// ====================================================
+// GPS HAL Receive and Decode Data
+// ====================================================
 void GPS_HAL_Receive_Decode_Data(GPS_DATA *data)
 {
+    // Attempt to receive and decode GGA data
     if (GPS_HAL_Receive_Raw_GGA_Data(&raw_buffer) == HAL_OK)
         decodeGGA(raw_buffer, &data->ggastruct);
 
+    // Attempt to receive and decode RMC data
     if (GPS_HAL_Receive_Raw_RMC_Data(&raw_buffer) == HAL_OK)
         decodeRMC(raw_buffer, &data->rmcstruct);
 }
 
-static int GMT = +530;
+// ====================================================
+// Static Variables for Decoding
+// ====================================================
+static int GMT = GMT_OFFSET;
 static int inx = 0;
-static int hr=0,min=0,day=0,mon=0,yr=0;
+static int hr = 0, min = 0, day = 0, mon = 0, yr = 0;
 static int daychange = 0;
 
+// ====================================================
+// Decode GGA Data
+// ====================================================
 /* Decodes the GGA Data
    @GGAbuffer is the buffer which stores the GGA Data
    @GGASTRUCT is the pointer to the GGA Structure (in the GPS Structure)
    @Returns 0 on success
-   @ returns 1, 2 depending on where the return statement is excuted, check function for more details
+   @Returns 1, 2 depending on where the return statement is executed, check function for more details
 */
 static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
 {
@@ -278,6 +314,15 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
     return 0;
 }
 
+// ====================================================
+// Decode RMC Data
+// ====================================================
+/* Decodes the RMC Data
+   @RMCbuffer is the buffer which stores the RMC Data
+   @RMCSTRUCT is the pointer to the RMC Structure (in the GPS Structure)
+   @Returns 0 on success
+   @Returns 1 if data is invalid
+*/
 static int decodeRMC(char *RMCbuffer, RMCSTRUCT *rmc)
 {
     inx = 0;

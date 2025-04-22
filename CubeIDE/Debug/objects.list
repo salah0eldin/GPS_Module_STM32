@@ -1,4 +1,3 @@
-"./Core/Src/NMEA.o"
 "./Core/Src/gps_neo_7_hal.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f1xx_hal_msp.o"
