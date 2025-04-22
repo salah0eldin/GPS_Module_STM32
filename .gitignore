@@ -4,3 +4,5 @@ CubeIDE/Drivers
 CubeIDE/.*
 CubeIDE/*.ioc
 CubeIDE/*.ld
+CubeIDE/*.launch
+.vscode
