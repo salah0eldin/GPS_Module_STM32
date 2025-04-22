@@ -1,6 +1,6 @@
-GPS_MODULE_STM32/CubeIDE/.settings
-GPS_MODULE_STM32/CubeIDE/Debug
-GPS_MODULE_STM32/CubeIDE/Drivers
-GPS_MODULE_STM32/CubeIDE/.*
-GPS_MODULE_STM32/CubeIDE/*.ioc
-GPS_MODULE_STM32/CubeIDE/*.ld
+CubeIDE/.settings
+CubeIDE/Debug
+CubeIDE/Drivers
+CubeIDE/.*
+CubeIDE/*.ioc
+CubeIDE/*.ld
