@@ -148,24 +148,40 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
     inx = 0;
     char buffer[12];
     int i = 0;
-    while (GGAbuffer[inx] != ',')
+
+    // Ensure inx does not exceed buffer size
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++; // 1st ','
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     inx++;
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++; // After time ','
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     inx++;
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++; // after latitude ','
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     inx++;
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++; // after NS ','
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     inx++;
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++; // after longitude ','
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     inx++;
-    while (GGAbuffer[inx] != ',')
-        inx++;                                                                         // after EW ','
-    inx++;                                                                             // reached the character to identify the fix
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
+        inx++; // after EW ','
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
+    inx++; // reached the character to identify the fix
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     if ((GGAbuffer[inx] == '1') || (GGAbuffer[inx] == '2') || (GGAbuffer[inx] == '6')) // 0 indicates no fix yet
     {
         gga->isfixValid = 1; // fix available
@@ -176,7 +192,7 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
         gga->isfixValid = 0; // If the fix is not available
         return 1;            // return error
     }
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++; // 1st ','
 
     /*********************** Get TIME ***************************/
@@ -185,12 +201,13 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
     inx++; // reach the first number in time
     memset(buffer, '\0', 12);
     i = 0;
-    while (GGAbuffer[inx] != ',') // copy upto the we reach the after time ','
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE) // copy upto the we reach the after time ','
     {
         buffer[i] = GGAbuffer[inx];
         i++;
         inx++;
     }
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
 
     hr = (atoi(buffer) / 10000) + GMT / 100; // get the hours from the 6 digit number
 
@@ -222,12 +239,14 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
     inx++; // Reach the first number in the lattitude
     memset(buffer, '\0', 12);
     i = 0;
-    while (GGAbuffer[inx] != ',') // copy upto the we reach the after lattitude ','
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE) // copy upto the we reach the after lattitude ','
     {
         buffer[i] = GGAbuffer[inx];
         i++;
         inx++;
     }
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     if (strlen(buffer) < 6)
         return 2;                 // If the buffer length is not appropriate, return error
     int16_t num = (atoi(buffer)); // change the buffer to the number. It will only convert upto decimal
@@ -247,12 +266,14 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
     inx++; // Reach the first number in the longitude
     memset(buffer, '\0', 12);
     i = 0;
-    while (GGAbuffer[inx] != ',') // copy upto the we reach the after longitude ','
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE) // copy upto the we reach the after longitude ','
     {
         buffer[i] = GGAbuffer[inx];
         i++;
         inx++;
     }
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     num = (atoi(buffer)); // change the buffer to the number. It will only convert upto decimal
     j = 0;
     while (buffer[j] != '.')
@@ -275,29 +296,34 @@ static int decodeGGA(char *GGAbuffer, GGASTRUCT *gga)
     inx++; // Reach the first number in the satellites
     memset(buffer, '\0', 12);
     i = 0;
-    while (GGAbuffer[inx] != ',') // copy upto the ',' after number of satellites
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE) // copy upto the ',' after number of satellites
     {
         buffer[i] = GGAbuffer[inx];
         i++;
         inx++;
     }
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     gga->numofsat = atoi(buffer); // convert the buffer to number and save into the structure
 
     /***************** skip HDOP  *********************/
     inx++;
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
         inx++;
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
 
     /*************** Altitude calculation ********************/
     inx++;
     memset(buffer, '\0', 12);
     i = 0;
-    while (GGAbuffer[inx] != ',')
+    while (GGAbuffer[inx] != ',' && inx < GPS_BUFFER_SIZE)
     {
         buffer[i] = GGAbuffer[inx];
         i++;
         inx++;
     }
+    if (inx >= GPS_BUFFER_SIZE) return 1; // Error: Index out of bounds
+
     num = (atoi(buffer));
     j = 0;
     while (buffer[j] != '.')

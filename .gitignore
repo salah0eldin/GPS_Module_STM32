@@ -5,4 +5,4 @@ CubeIDE/.*
 CubeIDE/*.ioc
 CubeIDE/*.ld
 CubeIDE/*.launch
-.vscode
+/.vscode
